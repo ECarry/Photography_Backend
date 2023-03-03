@@ -10,6 +10,7 @@ COPY . /app
 # 安装所需的 Python 依赖
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN python manage.py makemigrations
 RUN python manage.py migrate
 
 # 对外暴露 8000 端口
