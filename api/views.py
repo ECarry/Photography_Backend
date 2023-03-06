@@ -1,21 +1,28 @@
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-
-from .models import Photo, PhotoCategory, Video
-from .serializers import PhotoSerializer, PhotoCategorySerializer, VideoSerializer
+from .models import Category, Photo, Video
+from .serializers import CategorySerializer, PhotoSerializer, VideoSerializer
 import io
 import re
 from datetime import datetime
 from PIL import Image
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 import exifread
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    # permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class PhotoViewSet(viewsets.ModelViewSet):
     queryset = Photo.objects.all()
     serializer_class = PhotoSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    # permission_classes = [IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
+        print('---------self--------', self.request.data.get('category'))
+
         image_file = serializer.validated_data.pop('image')
         exif_tags = self.get_exif_data(image_file)
         photo = serializer.save(**exif_tags, title=image_file.name)
@@ -93,13 +100,7 @@ class PhotoViewSet(viewsets.ModelViewSet):
             return thumbnail_file
 
 
-class PhotoCategoryViewSet(viewsets.ModelViewSet):
-    queryset = PhotoCategory.objects.all()
-    serializer_class = PhotoCategorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    # permission_classes = [IsAuthenticatedOrReadOnly]

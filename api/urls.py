@@ -4,7 +4,7 @@ from django.urls import path, include
 
 router = routers.DefaultRouter()
 router.register(r'photos', views.PhotoViewSet)
-router.register(r'category', views.PhotoCategoryViewSet)
+router.register(r'category', views.CategoryViewSet)
 router.register(r'videos', views.VideoViewSet)
 
 urlpatterns = [

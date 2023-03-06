@@ -1,20 +1,16 @@
 from rest_framework import serializers
-from .models import Photo, PhotoCategory, Video
+from .models import Category, Photo, Video
 
 
-class PhotoSerializer(serializers.ModelSerializer):
-    categories = serializers.StringRelatedField(many=True)
-
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Photo
+        model = Category
         fields = '__all__'
 
 
-class PhotoCategorySerializer(serializers.ModelSerializer):
-    photos = PhotoSerializer(many=True)
-
+class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PhotoCategory
+        model = Photo
         fields = '__all__'
 
 

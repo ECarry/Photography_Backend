@@ -1,9 +1,17 @@
 from django.db import models
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
+
 class Photo(models.Model):
     title = models.CharField(null=True, blank=True, max_length=255)
     image = models.ImageField(upload_to='photos/%Y/%m/%d/')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     thumbnail = models.ImageField(null=True, blank=True, upload_to='photos/thumbnails/%Y/%m/%d/')
     description = models.TextField(null=True, blank=True)
     timestamp = models.DateTimeField(null=True, blank=True, verbose_name='拍摄时间')
@@ -21,14 +29,6 @@ class Photo(models.Model):
 
     def __str__(self):
         return self.title
-
-
-class PhotoCategory(models.Model):
-    name = models.CharField(null=True, blank=True, max_length=255)
-    photos = models.ManyToManyField(Photo, related_name='categories')
-
-    def __str__(self):
-        return self.name
 
 
 class Video(models.Model):
