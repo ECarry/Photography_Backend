@@ -96,8 +96,10 @@ class PhotoViewSet(viewsets.ModelViewSet):
 class PhotoCategoryViewSet(viewsets.ModelViewSet):
     queryset = PhotoCategory.objects.all()
     serializer_class = PhotoCategorySerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
