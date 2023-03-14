@@ -1,3 +1,5 @@
+import os
+from django.conf import settings
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from .models import Category, Photo, Video
 from .serializers import CategorySerializer, PhotoSerializer, VideoSerializer
@@ -5,20 +7,20 @@ import io
 import re
 from datetime import datetime
 from PIL import Image
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 import exifread
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    # permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class PhotoViewSet(viewsets.ModelViewSet):
     queryset = Photo.objects.all()
     serializer_class = PhotoSerializer
-    # permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
         image_file = serializer.validated_data.pop('image')
@@ -27,6 +29,20 @@ class PhotoViewSet(viewsets.ModelViewSet):
         thumbnail = self.create_thumbnail(image_file)
         photo.image.save(image_file.name, image_file, save=True)
         photo.thumbnail.save(thumbnail.name, thumbnail, save=True)
+
+    def perform_destroy(self, instance):
+        # 删除上传的图片
+        if instance.image:
+            path = os.path.join(settings.MEDIA_ROOT, str(instance.image))
+            os.remove(path)
+
+        # 删除略缩图
+        if instance.thumbnail:
+            thumbnail_path = os.path.join(settings.MEDIA_ROOT, str(instance.thumbnail))
+            os.remove(thumbnail_path)
+
+        # 删除数据库记录
+        instance.delete()
 
     # chatGPT 优化后的代码
     def get_exif_data(self, image_file):
@@ -168,4 +184,4 @@ class PhotoViewSet(viewsets.ModelViewSet):
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    # permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
