@@ -20,13 +20,20 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class PhotoViewSet(viewsets.ModelViewSet):
     queryset = Photo.objects.all()
     serializer_class = PhotoSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    # permission_classes = [IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
         image_file = serializer.validated_data.pop('image')
+        size_tags = {}
+        # 保存原图长宽尺寸
+        with Image.open(image_file) as img:
+            size_tags['width'], size_tags['height'] = img.size
         exif_tags = self.get_exif_data(image_file)
-        photo = serializer.save(**exif_tags, title=image_file.name)
         thumbnail = self.create_thumbnail(image_file)
+        # 保存略缩图长宽尺寸
+        with Image.open(thumbnail) as thumbnail_img:
+            size_tags['thumbnail_width'], size_tags['thumbnail_height'] = thumbnail_img.size
+        photo = serializer.save(**exif_tags, **size_tags, title=image_file.name)
         photo.image.save(image_file.name, image_file, save=True)
         photo.thumbnail.save(thumbnail.name, thumbnail, save=True)
 

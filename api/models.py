@@ -15,6 +15,10 @@ class Photo(models.Model):
     thumbnail = models.ImageField(null=True, blank=True, upload_to='photos/thumbnails/%Y/%m/%d/')
     description = models.TextField(null=True, blank=True)
     timestamp = models.DateTimeField(null=True, blank=True, verbose_name='拍摄时间')
+    width = models.IntegerField(blank=True, null=True)
+    height = models.IntegerField(blank=True, null=True)
+    thumbnail_width = models.IntegerField(blank=True, null=True)
+    thumbnail_height = models.IntegerField(blank=True, null=True)
     # 读取照片元数据为十进制
     lat = models.DecimalField(null=True, blank=True, max_digits=9, decimal_places=6, verbose_name='纬度')
     lon = models.DecimalField(null=True, blank=True, max_digits=9, decimal_places=6, verbose_name='经度')
