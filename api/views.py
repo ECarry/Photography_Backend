@@ -76,6 +76,8 @@ class PhotoViewSet(viewsets.ModelViewSet):
                         exif_tags[field] = formatted_timestamp
                     elif field == 'aperture' or field == 'focal_length' or field == 'altitude':
                         exif_tags[field] = self.calc_num(value)
+                    elif field == 'camera_model' and value == 'FC3411':
+                        exif_tags[field] = 'Air 2S'
                     else:
                         exif_tags[field] = value
 
