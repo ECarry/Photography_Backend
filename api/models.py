@@ -22,6 +22,7 @@ class Photo(models.Model):
     # 读取照片元数据为十进制
     lat = models.DecimalField(null=True, blank=True, max_digits=9, decimal_places=6, verbose_name='纬度')
     lon = models.DecimalField(null=True, blank=True, max_digits=9, decimal_places=6, verbose_name='经度')
+    altitude = models.FloatField(null=True, blank=True, verbose_name='海拔')
     aperture = models.FloatField(null=True, blank=True, verbose_name='光圈')
     iso = models.IntegerField(null=True, blank=True)
     shutter_speed = models.CharField(null=True, blank=True, max_length=100)

@@ -64,7 +64,8 @@ class PhotoViewSet(viewsets.ModelViewSet):
                 'EXIF ExposureTime': 'shutter_speed',
                 'Image Make': 'camera_brand',
                 'Image Model': 'camera_model',
-                'EXIF LensModel': 'camera_lens'
+                'EXIF LensModel': 'camera_lens',
+                'GPS GPSAltitude': 'altitude'
             }
             for tag, field in fields_to_format.items():
                 value = str(tags.get(tag))
@@ -73,7 +74,7 @@ class PhotoViewSet(viewsets.ModelViewSet):
                         timestamp_obj = datetime.strptime(value, "%Y:%m:%d %H:%M:%S")
                         formatted_timestamp = timestamp_obj.strftime("%Y-%m-%d %H:%M:%S")
                         exif_tags[field] = formatted_timestamp
-                    elif field == 'aperture' or field == 'focal_length':
+                    elif field == 'aperture' or field == 'focal_length' or field == 'altitude':
                         exif_tags[field] = self.calc_num(value)
                     else:
                         exif_tags[field] = value
