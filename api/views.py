@@ -18,7 +18,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class PhotoViewSet(viewsets.ModelViewSet):
-    queryset = Photo.objects.all()
+    queryset = Photo.objects.all().order_by('-id')
     serializer_class = PhotoSerializer
     # permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -36,6 +36,24 @@ class PhotoViewSet(viewsets.ModelViewSet):
         photo = serializer.save(**exif_tags, **size_tags, title=image_file.name)
         photo.image.save(image_file.name, image_file, save=True)
         photo.thumbnail.save(thumbnail.name, thumbnail, save=True)
+
+    # 根据请求参数过滤结果
+    # def get_queryset(self):
+    #     queryset = Photo.objects.all()
+    #     # 获取请求参数中的过滤字段
+    #     filter_field = self.request.query_params.get('filter_field')
+    #     filter_value = self.request.query_params.get('filter_value')
+    #     if filter_field and filter_value:
+    #         # 根据请求参数进行过滤
+    #         queryset = queryset.filter(**{filter_field: filter_value})
+    #     return queryset
+
+    def get_queryset(self):
+        queryset = Photo.objects.all()
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(category=category)
+        return queryset
 
     def perform_destroy(self, instance):
         # 删除上传的图片

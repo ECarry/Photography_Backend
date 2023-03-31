@@ -27,7 +27,7 @@ class Photo(models.Model):
     iso = models.IntegerField(null=True, blank=True)
     shutter_speed = models.CharField(null=True, blank=True, max_length=100)
     focal_length = models.FloatField(null=True, blank=True, verbose_name='焦距')
-    rating = models.IntegerField(blank=True, null=True, verbose_name='评分')
+    rating = models.DecimalField(max_digits=2, decimal_places=1, blank=True, null=True, verbose_name='评分')
     camera_brand = models.CharField(null=True, blank=True, max_length=100)
     camera_model = models.CharField(null=True, blank=True, max_length=100)
     camera_lens = models.CharField(null=True, blank=True, max_length=100)
