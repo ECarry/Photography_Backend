@@ -49,7 +49,7 @@ class PhotoViewSet(viewsets.ModelViewSet):
     #     return queryset
 
     def get_queryset(self):
-        queryset = Photo.objects.all()
+        queryset = Photo.objects.all().order_by('-id')
         category = self.request.query_params.get('category')
         if category:
             queryset = queryset.filter(category=category)
