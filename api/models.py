@@ -31,6 +31,7 @@ class Photo(models.Model):
     camera_brand = models.CharField(null=True, blank=True, max_length=100)
     camera_model = models.CharField(null=True, blank=True, max_length=100)
     camera_lens = models.CharField(null=True, blank=True, max_length=100)
+    hash = models.CharField(null=True, blank=True, max_length=100)
 
     def __str__(self):
         return self.title

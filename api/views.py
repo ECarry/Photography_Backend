@@ -9,6 +9,7 @@ from datetime import datetime
 from PIL import Image
 from rest_framework import viewsets
 import exifread
+import blurhash
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -30,10 +31,13 @@ class PhotoViewSet(viewsets.ModelViewSet):
             size_tags['width'], size_tags['height'] = img.size
         exif_tags = self.get_exif_data(image_file)
         thumbnail = self.create_thumbnail(image_file)
+        # hash
+        hash_code = blurhash.encode(thumbnail, x_components=4, y_components=3)
+
         # 保存略缩图长宽尺寸
         with Image.open(thumbnail) as thumbnail_img:
             size_tags['thumbnail_width'], size_tags['thumbnail_height'] = thumbnail_img.size
-        photo = serializer.save(**exif_tags, **size_tags, title=image_file.name)
+        photo = serializer.save(**exif_tags, **size_tags, title=image_file.name, hash=hash_code)
         photo.image.save(image_file.name, image_file, save=True)
         photo.thumbnail.save(thumbnail.name, thumbnail, save=True)
 
