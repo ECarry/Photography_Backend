@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Photo, Video
+from .models import Category, Photo, Video, Album
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -11,6 +11,12 @@ class CategorySerializer(serializers.ModelSerializer):
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
+        fields = '__all__'
+
+
+class AlbumSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Album
         fields = '__all__'
 
 

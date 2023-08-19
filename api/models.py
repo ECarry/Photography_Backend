@@ -8,6 +8,18 @@ class Category(models.Model):
         return self.name
 
 
+class Album(models.Model):
+    name = models.CharField(max_length=100)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    cover_photo = models.ImageField(null=True, blank=True, upload_to='album_covers/%Y/%m/%d/')
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Photo(models.Model):
     title = models.CharField(null=True, blank=True, max_length=255)
     image = models.ImageField(upload_to='photos/%Y/%m/%d/')
@@ -31,6 +43,7 @@ class Photo(models.Model):
     camera_brand = models.CharField(null=True, blank=True, max_length=100)
     camera_model = models.CharField(null=True, blank=True, max_length=100)
     camera_lens = models.CharField(null=True, blank=True, max_length=100)
+    album = models.ForeignKey(Album, on_delete=models.CASCADE, null=True, blank=True)
     hash = models.CharField(null=True, blank=True, max_length=100)
 
     def __str__(self):

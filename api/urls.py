@@ -2,10 +2,12 @@ from rest_framework import routers
 from . import views
 from django.urls import path, include
 
+
 router = routers.DefaultRouter()
 router.register(r'photos', views.PhotoViewSet)
 router.register(r'category', views.CategoryViewSet)
 router.register(r'videos', views.VideoViewSet)
+router.register(r'albums', views.AlbumViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

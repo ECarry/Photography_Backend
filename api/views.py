@@ -1,13 +1,15 @@
 import os
 from django.conf import settings
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from .models import Category, Photo, Video
-from .serializers import CategorySerializer, PhotoSerializer, VideoSerializer
+from rest_framework.response import Response
+
+from .models import Category, Photo, Video, Album
+from .serializers import CategorySerializer, PhotoSerializer, VideoSerializer, AlbumSerializer
 import io
 import re
 from datetime import datetime
 from PIL import Image
-from rest_framework import viewsets
+from rest_framework import viewsets, serializers, status
 import exifread
 import blurhash
 
@@ -15,15 +17,76 @@ import blurhash
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    #permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class AlbumViewSet(viewsets.ModelViewSet):
+    queryset = Album.objects.all()
+    serializer_class = AlbumSerializer
+    #permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = Album.objects.all()
+        category = self.request.query_params.get('category')
+
+        if category:
+            queryset = queryset.filter(category=category)
+        return queryset
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # 获取相册下的所有照片并删除
+        photos = Photo.objects.filter(album=instance)
+        for photo in photos:
+            self.delete_photo(photo)
+
+        # 删除相册封面文件
+        if instance.cover_photo:
+            self.delete_cover_photo(instance.cover_photo)
+
+        # 删除相册记录
+        instance.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def delete_photo(self, photo):
+        # 删除上传的图片
+        if photo.image:
+            path = os.path.join(settings.MEDIA_ROOT, str(photo.image))
+            os.remove(path)
+
+        # 删除略缩图
+        if photo.thumbnail:
+            thumbnail_path = os.path.join(settings.MEDIA_ROOT, str(photo.thumbnail))
+            os.remove(thumbnail_path)
+
+        # 删除照片记录
+        photo.delete()
+
+    def delete_cover_photo(self, cover_photo):
+        # 删除相册封面文件
+        path = os.path.join(settings.MEDIA_ROOT, str(cover_photo))
+        os.remove(path)
 
 
 class PhotoViewSet(viewsets.ModelViewSet):
     queryset = Photo.objects.all().order_by('-id')
     serializer_class = PhotoSerializer
+
     # permission_classes = [IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
+        album = self.request.data.get('album')
+        category = self.request.data.get('category')
+
+        # 如果提供了相册 ID，执行相册验证
+        if album:
+            album = Album.objects.get(pk=album)
+            if album.category_id != int(category):
+                raise serializers.ValidationError("Photo's category must match album's category.",
+                                                  code=status.HTTP_400_BAD_REQUEST)
+
         image_file = serializer.validated_data.pop('image')
         size_tags = {}
         # 保存原图长宽尺寸
@@ -41,22 +104,17 @@ class PhotoViewSet(viewsets.ModelViewSet):
         photo.image.save(image_file.name, image_file, save=True)
         photo.thumbnail.save(thumbnail.name, thumbnail, save=True)
 
-    # 根据请求参数过滤结果
-    # def get_queryset(self):
-    #     queryset = Photo.objects.all()
-    #     # 获取请求参数中的过滤字段
-    #     filter_field = self.request.query_params.get('filter_field')
-    #     filter_value = self.request.query_params.get('filter_value')
-    #     if filter_field and filter_value:
-    #         # 根据请求参数进行过滤
-    #         queryset = queryset.filter(**{filter_field: filter_value})
-    #     return queryset
-
     def get_queryset(self):
         queryset = Photo.objects.all().order_by('-id')
         category = self.request.query_params.get('category')
+        album = self.request.query_params.get('album')
+
         if category:
             queryset = queryset.filter(category=category)
+
+        if album:
+            queryset = queryset.filter(album_id=album)
+
         return queryset
 
     def perform_destroy(self, instance):
@@ -115,65 +173,6 @@ class PhotoViewSet(viewsets.ModelViewSet):
                 exif_tags['lat'] = lat
                 exif_tags['lon'] = lon
         return exif_tags
-
-    # 从上传的图片获取元数据
-    # def get_exif_data(self, image_file):
-    #     exif_tags = {}
-    #     tags = exifread.process_file(image_file, stop_tag='TAG')
-    #     if tags:
-    #         # 格式化时间
-    #         timestamp = str(tags.get('EXIF DateTimeOriginal'))
-    #         if timestamp != 'None':
-    #             timestamp_obj = datetime.strptime(timestamp, "%Y:%m:%d %H:%M:%S")
-    #             formatted_timestamp = timestamp_obj.strftime("%Y-%m-%d %H:%M:%S")
-    #             exif_tags['timestamp'] = formatted_timestamp
-    #         else:
-    #             now = datetime.now()  # 获取当前时间
-    #             formatted_date = now.strftime("%Y-%m-%d %H:%M:%S")  # 格式化时间为指定字符串格式
-    #             exif_tags['timestamp'] = formatted_date
-    #
-    #         # 格式化光圈环
-    #         aperture = str(tags.get('EXIF FNumber'))
-    #         if aperture != 'None':
-    #             exif_tags['aperture'] = self.calc_num(aperture)
-    #
-    #         # 格式化焦距
-    #         focal_length = str(tags.get('EXIF FocalLengthIn35mmFilm'))
-    #         if focal_length != 'None':
-    #             exif_tags['focal_length'] = self.calc_num(focal_length)
-    #
-    #         iso = str(tags.get('EXIF ISOSpeedRatings'))
-    #         if iso != 'None':
-    #             exif_tags['iso'] = iso
-    #
-    #         shutter_speed = str(tags.get('EXIF ExposureTime'))
-    #         if shutter_speed != 'None':
-    #             exif_tags['shutter_speed'] = shutter_speed
-    #
-    #         camera_brand = str(tags.get('Image Make'))
-    #         if camera_brand != 'None':
-    #             exif_tags['camera_brand'] = camera_brand
-    #
-    #         camera_model = str(tags.get('Image Model'))
-    #         if camera_model != 'None':
-    #             exif_tags['camera_model'] = camera_model
-    #
-    #         camera_lens = str(tags.get('EXIF LensModel'))
-    #         if camera_lens != 'None':
-    #             exif_tags['camera_lens'] = camera_lens
-    #
-    #         lat_tag = tags.get('GPS GPSLatitude')
-    #         lat_ref = tags.get('GPS GPSLatitudeRef')
-    #         lon_tag = tags.get('GPS GPSLongitude')
-    #         lon_ref = tags.get('GPS GPSLongitudeRef')
-    #
-    #         # Convert the latitude and longitude tags to decimal format
-    #         if lat_tag and lat_ref and lon_tag and lon_ref:
-    #             lat = self.get_decimal_from_dms(lat_tag.values, lat_ref.values)
-    #             lon = self.get_decimal_from_dms(lon_tag.values, lon_ref.values)
-    #             exif_tags['lat'] = lat
-    #             exif_tags['lon'] = lon
-    #     return exif_tags
 
     # 判断获取的数据是否为数字或者 a/b
     def calc_num(self, string):
