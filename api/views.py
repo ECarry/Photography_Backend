@@ -108,12 +108,16 @@ class PhotoViewSet(viewsets.ModelViewSet):
         queryset = Photo.objects.all().order_by('-id')
         category = self.request.query_params.get('category')
         album = self.request.query_params.get('album')
+        latest = self.request.query_params.get('latest')
 
         if category:
             queryset = queryset.filter(category=category)
 
         if album:
             queryset = queryset.filter(album_id=album)
+
+        if latest and category:
+            queryset = queryset.filter(category=category)[:int(latest)]
 
         return queryset
 
